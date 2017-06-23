@@ -13,7 +13,6 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.OvershootInterpolator;
@@ -23,7 +22,7 @@ import android.view.animation.OvershootInterpolator;
  * 描述：
  */
 public class BubbleView extends View {
-    private static final int MOVE_OFFSET = 25;
+    private static final int MOVE_OFFSET = 30;
     /**
      * 静止状态
      */
@@ -46,9 +45,18 @@ public class BubbleView extends View {
     private int state = STATE_STATIC;
 
     private Path path;
-
+    /**
+     * 静止小圆的半径
+     */
     private int mBubbleStillRadius;
+    /**
+     * 移动小圆的半径
+     */
     private int mBubbleMoveRadius;
+    /**
+     * 静止圆的最小半径
+     */
+    private int mBubbleStillMinRadius;
 
     private Paint bgPaint;
     private Paint txtPaint;
@@ -80,6 +88,7 @@ public class BubbleView extends View {
         txtColor = Color.WHITE;
         bgColor = Color.parseColor("#FF7256");
         mBubbleMoveRadius = 30;
+        mBubbleStillMinRadius = 15;
         txt = "5";
     }
 
@@ -138,7 +147,6 @@ public class BubbleView extends View {
             case MotionEvent.ACTION_DOWN:
                 if (state != STATE_DISMISS) {
                     mDis = (int) Math.hypot(event.getX() - mStillCenter.x, event.getY() - mStillCenter.y);
-                    Log.d("test", "dis:" + mDis + "|" + "mBubbleMoveRadius + MOVE_OFFSET:" + mBubbleMoveRadius + MOVE_OFFSET);
                     if (mDis < mBubbleMoveRadius + MOVE_OFFSET) {
                         state = STATE_CONNECT;
                     } else {
@@ -155,6 +163,9 @@ public class BubbleView extends View {
                     if (state == STATE_CONNECT) {
                         if (mDis < mBubbleMoveRadius * 8 - MOVE_OFFSET) {
                             mBubbleStillRadius = mBubbleMoveRadius - mDis / 8;
+                            if (mBubbleStillRadius < mBubbleStillMinRadius) {
+                                mBubbleStillRadius = mBubbleStillMinRadius;
+                            }
                         } else {
                             state = STATE_DISCONNECT;
                         }
