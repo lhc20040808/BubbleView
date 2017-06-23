@@ -10,10 +10,10 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Point;
 import android.graphics.PointF;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.OvershootInterpolator;
@@ -23,7 +23,7 @@ import android.view.animation.OvershootInterpolator;
  * 描述：
  */
 public class BubbleView extends View {
-    private static final int MOVE_OFFSET = 10;
+    private static final int MOVE_OFFSET = 25;
     /**
      * 静止状态
      */
@@ -57,8 +57,8 @@ public class BubbleView extends View {
     private int bgColor;
     private int txtColor;
 
-    private Point mStillCenter = new Point();
-    private Point mMoveCenter = new Point();
+    private PointF mStillCenter = new PointF();
+    private PointF mMoveCenter = new PointF();
 
     private String txt;
     /**
@@ -78,7 +78,7 @@ public class BubbleView extends View {
 
     private void testInit() {
         txtColor = Color.WHITE;
-        bgColor = Color.MAGENTA;
+        bgColor = Color.parseColor("#FF7256");
         mBubbleMoveRadius = 30;
         txt = "5";
     }
@@ -95,12 +95,22 @@ public class BubbleView extends View {
         txtPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         txtPaint.setTextAlign(Paint.Align.CENTER);
         txtPaint.setColor(txtColor);
+        txtPaint.setTextSize(40);
 
         fm = txtPaint.getFontMetrics();
 
         path = new Path();
 
         mBubbleStillRadius = mBubbleMoveRadius;
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        mMoveCenter.x = getWidth() / 2;
+        mMoveCenter.y = getHeight() / 2;
+        mStillCenter.x = getWidth() / 2;
+        mStillCenter.y = getHeight() / 2;
     }
 
     @Override
@@ -127,7 +137,8 @@ public class BubbleView extends View {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 if (state != STATE_DISMISS) {
-                    mDis = (int) Math.hypot(mStillCenter.x - mMoveCenter.x, mStillCenter.y - mMoveCenter.y);
+                    mDis = (int) Math.hypot(event.getX() - mStillCenter.x, event.getY() - mStillCenter.y);
+                    Log.d("test", "dis:" + mDis + "|" + "mBubbleMoveRadius + MOVE_OFFSET:" + mBubbleMoveRadius + MOVE_OFFSET);
                     if (mDis < mBubbleMoveRadius + MOVE_OFFSET) {
                         state = STATE_CONNECT;
                     } else {
@@ -136,16 +147,20 @@ public class BubbleView extends View {
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                mMoveCenter.x = (int) event.getX();
-                mMoveCenter.y = (int) event.getY();
-                mDis = (int) Math.hypot(mStillCenter.x - mMoveCenter.x, mStillCenter.y - mMoveCenter.y);
+                if (state != STATE_STATIC) {
+                    mMoveCenter.x = (int) event.getX();
+                    mMoveCenter.y = (int) event.getY();
 
-                if (mDis < mBubbleStillRadius * 8 - MOVE_OFFSET) {
-                    mBubbleStillRadius -= mDis / 8;
-                } else {
-                    state = STATE_DISCONNECT;
+                    mDis = (int) Math.hypot(event.getX() - mStillCenter.x, event.getY() - mStillCenter.y);
+                    if (state == STATE_CONNECT) {
+                        if (mDis < mBubbleMoveRadius * 8 - MOVE_OFFSET) {
+                            mBubbleStillRadius = mBubbleMoveRadius - mDis / 8;
+                        } else {
+                            state = STATE_DISCONNECT;
+                        }
+                    }
+                    invalidate();
                 }
-                invalidate();
                 break;
             case MotionEvent.ACTION_UP:
                 if (state == STATE_CONNECT) {
@@ -157,8 +172,6 @@ public class BubbleView extends View {
                         startBurstAnim();
                     }
                 }
-
-
                 break;
         }
         return true;
@@ -183,7 +196,7 @@ public class BubbleView extends View {
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                mMoveCenter = (Point) valueAnimator.getAnimatedValue();
+                mMoveCenter = (PointF) valueAnimator.getAnimatedValue();
                 invalidate();
             }
         });
@@ -207,25 +220,23 @@ public class BubbleView extends View {
     private void drawConnect(Canvas canvas) {
         canvas.drawCircle(mStillCenter.x, mStillCenter.y, mBubbleStillRadius, bgPaint);
         canvas.drawCircle(mMoveCenter.x, mMoveCenter.y, mBubbleMoveRadius, bgPaint);
-
         path.reset();
-        int iAnchorX = (int) ((mStillCenter.x + mMoveCenter.x) / 2);
-        int iAnchorY = (int) ((mStillCenter.y + mMoveCenter.y) / 2);
-        double dis = Math.hypot(mStillCenter.x - mMoveCenter.x, mStillCenter.y - mMoveCenter.y);
-        float cosTheta = (float) (mMoveCenter.x - mStillCenter.x / dis);
-        float sinTheta = (float) (mMoveCenter.y - mStillCenter.y / dis);
+        float iAnchorX = (mStillCenter.x + mMoveCenter.x) / 2;
+        float iAnchorY = (mStillCenter.y + mMoveCenter.y) / 2;
+        float cosTheta = (mMoveCenter.x - mStillCenter.x) / mDis;
+        float sinTheta = (mMoveCenter.y - mStillCenter.y) / mDis;
         float aX = mStillCenter.x - sinTheta * mBubbleStillRadius;
         float aY = mStillCenter.y + cosTheta * mBubbleStillRadius;
-        float bX = mStillCenter.x - sinTheta * mBubbleStillRadius;
-        float bY = mStillCenter.y + cosTheta * mBubbleStillRadius;
+        float bX = mMoveCenter.x - sinTheta * mBubbleMoveRadius;
+        float bY = mMoveCenter.y + cosTheta * mBubbleMoveRadius;
         path.moveTo(aX, aY);
         path.quadTo(iAnchorX, iAnchorY, bX, bY);
 
         float cX = mMoveCenter.x + sinTheta * mBubbleMoveRadius;
         float cY = mMoveCenter.y - cosTheta * mBubbleMoveRadius;
-        float dX = mMoveCenter.x + sinTheta * mBubbleMoveRadius;
-        float dY = mMoveCenter.y - cosTheta * mBubbleMoveRadius;
-        path.moveTo(cX, cY);
+        float dX = mStillCenter.x + sinTheta * mBubbleStillRadius;
+        float dY = mStillCenter.y - cosTheta * mBubbleStillRadius;
+        path.lineTo(cX, cY);
         path.quadTo(iAnchorX, iAnchorY, dX, dY);
         path.close();
         canvas.drawPath(path, bgPaint);
@@ -243,7 +254,7 @@ public class BubbleView extends View {
 
     }
 
-    private void drawTxt(Canvas canvas, int x, int y) {
+    private void drawTxt(Canvas canvas, float x, float y) {
         canvas.drawText(txt, x, (fm.bottom - fm.top) / 2 - fm.bottom + y, txtPaint);
     }
 }
