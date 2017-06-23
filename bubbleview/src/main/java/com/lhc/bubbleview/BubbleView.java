@@ -6,6 +6,7 @@ import android.animation.PointFEvaluator;
 import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -267,5 +268,11 @@ public class BubbleView extends View {
 
     private void drawTxt(Canvas canvas, float x, float y) {
         canvas.drawText(txt, x, (fm.bottom - fm.top) / 2 - fm.bottom + y, txtPaint);
+    }
+
+    private Bitmap createBitmap() {
+        //TODO 增加粒子破碎动画效果
+        Bitmap bitmap = Bitmap.createBitmap(mBubbleMoveRadius * 2, mBubbleMoveRadius * 2, Bitmap.Config.ARGB_8888);
+        return bitmap;
     }
 }
