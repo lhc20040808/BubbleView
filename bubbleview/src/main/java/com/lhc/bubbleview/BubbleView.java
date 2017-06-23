@@ -273,6 +273,8 @@ public class BubbleView extends View {
     private Bitmap createBitmap() {
         //TODO 增加粒子破碎动画效果
         Bitmap bitmap = Bitmap.createBitmap(mBubbleMoveRadius * 2, mBubbleMoveRadius * 2, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawCircle(bitmap.getWidth() / 2, bitmap.getHeight() / 2, mBubbleMoveRadius, bgPaint);
         return bitmap;
     }
 }
