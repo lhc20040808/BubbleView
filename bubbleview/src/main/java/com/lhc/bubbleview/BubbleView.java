@@ -197,13 +197,13 @@ public class BubbleView extends View {
         state = STATE_DISMISS;
         Bitmap bitmap = createBitmap();
 
-        if (mParticleFactory == null) {
-            mParticleFactory = new FallDownParticleFactory();
-        }
+        checkParticleFactory();
 
         particles = mParticleFactory.generateParticleFactory(bitmap
                 , (int) (mMoveCenter.x - mBubbleMoveRadius)
                 , (int) (mMoveCenter.y - mBubbleMoveRadius));
+
+        bitmap.recycle();
 
         animator = ValueAnimator.ofFloat(0, 1);
         animator.setDuration(400);
@@ -222,6 +222,12 @@ public class BubbleView extends View {
             }
         });
         animator.start();
+    }
+
+    private void checkParticleFactory() {
+        if (mParticleFactory == null) {
+            mParticleFactory = new FallDownParticleFactory();
+        }
     }
 
     private void startBubbleResetAnim() {
