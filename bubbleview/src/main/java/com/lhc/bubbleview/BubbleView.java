@@ -6,6 +6,7 @@ import android.animation.PointFEvaluator;
 import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -20,7 +21,7 @@ import android.view.animation.OvershootInterpolator;
 
 /**
  * 作者：LHC on 2017/6/22 10:22
- * 描述：
+ * 描述：仿qq聊天气泡，消失时为粒子爆裂效果
  */
 public class BubbleView extends View {
     private static final int MOVE_OFFSET = 30;
@@ -85,8 +86,18 @@ public class BubbleView extends View {
 
     public BubbleView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        initAttrs(attrs);
         testInit();
         init();
+    }
+
+    private void initAttrs(AttributeSet attrs) {
+        TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.BubbleView);
+        if (typedArray != null) {
+            bgColor = typedArray.getColor(R.styleable.BubbleView_bgColor, Color.parseColor("#FF7256"));
+            txtColor = typedArray.getColor(R.styleable.BubbleView_txtColor, Color.WHITE);
+            typedArray.recycle();
+        }
     }
 
     private void testInit() {
