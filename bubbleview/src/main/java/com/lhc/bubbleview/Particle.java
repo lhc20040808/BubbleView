@@ -8,11 +8,11 @@ import android.graphics.Paint;
  * 描述：
  */
 public abstract class Particle {
-    float x;
-    float y;
-    int color;
-    int width;
-    int height;
+    public float x;
+    public float y;
+    public int color;
+    public int width;
+    public int height;
 
     abstract void draw(Canvas canvas, Paint paint);
 

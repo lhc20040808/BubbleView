@@ -75,6 +75,10 @@ public class BubbleView extends View {
      */
     private int mDis;
 
+    private IParticleFactory mParticleFactory;
+    private Particle[][] particles;
+    private ValueAnimator animator;
+
     public BubbleView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
@@ -191,6 +195,33 @@ public class BubbleView extends View {
 
     private void startBurstAnim() {
         state = STATE_DISMISS;
+        Bitmap bitmap = createBitmap();
+
+        if (mParticleFactory == null) {
+            mParticleFactory = new FallDownParticleFactory();
+        }
+
+        particles = mParticleFactory.generateParticleFactory(bitmap
+                , (int) (mMoveCenter.x - mBubbleMoveRadius)
+                , (int) (mMoveCenter.y - mBubbleMoveRadius));
+
+        animator = ValueAnimator.ofFloat(0, 1);
+        animator.setDuration(400);
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                invalidate();
+            }
+        });
+
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+
+            }
+        });
+        animator.start();
     }
 
     private void startBubbleResetAnim() {
@@ -263,7 +294,18 @@ public class BubbleView extends View {
     }
 
     private void drawDismiss(Canvas canvas) {
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setStyle(Paint.Style.FILL);
 
+        if (particles != null) {
+            int rowCount = particles.length;
+            int columnCount = particles[0].length;
+            for (int row = 0; row < rowCount; row++) {
+                for (int column = 0; column < columnCount; column++) {
+                    particles[row][column].advance(canvas, paint, (Float) animator.getAnimatedValue());
+                }
+            }
+        }
     }
 
     private void drawTxt(Canvas canvas, float x, float y) {
@@ -271,10 +313,13 @@ public class BubbleView extends View {
     }
 
     private Bitmap createBitmap() {
-        //TODO 增加粒子破碎动画效果
         Bitmap bitmap = Bitmap.createBitmap(mBubbleMoveRadius * 2, mBubbleMoveRadius * 2, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         canvas.drawCircle(bitmap.getWidth() / 2, bitmap.getHeight() / 2, mBubbleMoveRadius, bgPaint);
         return bitmap;
+    }
+
+    public void setParticleFactory(IParticleFactory particleFactory) {
+        this.mParticleFactory = particleFactory;
     }
 }
